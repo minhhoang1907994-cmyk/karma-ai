@@ -1,0 +1,23 @@
+flowchart TD
+    classDef actor fill:#E6F1FB,stroke:#185FA5,color:#0C447C
+    classDef internal fill:#EAF3DE,stroke:#3B6D11,color:#27500A
+    classDef external fill:#FAECE7,stroke:#993C1D,color:#712B13
+    classDef error fill:#FCEBEB,stroke:#A32D2D,color:#791F1F
+
+    A([Creator]):::actor --> B["Form: năm sinh / giới tính / ngày"]:::internal
+    B --> C["POST /api/fortune"]:::internal
+    C --> D{"Input hợp lệ?"}
+    D -- No --> E["400 VALIDATION_ERROR"]:::error
+    D -- Yes --> F["Gọi song song: /api/hoagiap<br/>+ /api/ngay + /api/khunggio"]:::external
+    F --> G{"Can Chi khớp<br/>công thức?"}
+    G -- No --> H["422 CANCHI_ASSERT_FAILED"]:::error
+    G -- Yes --> I["Tính local: Thập Thần, quan hệ Chi,<br/>nạp âm, giờ tốt, verdict, 4 mảng"]:::internal
+    I --> J["Gemini text: sinh văn bản"]:::external
+    J --> K{"Text thành công?"}
+    K -- No --> L["502 TEXT_GENERATION_FAILED"]:::error
+    K -- Yes --> M["Gemini image × 2"]:::external
+    M --> N{"Ảnh thành công?"}
+    N -- No --> O["status=fallback, trả prompt ảnh"]:::internal
+    N -- Yes --> P["status=generated"]:::internal
+    O --> Q["200: 2 phần × 3 khối + credit"]:::internal
+    P --> Q

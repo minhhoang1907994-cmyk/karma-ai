@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Xem Vận Mệnh Ngày</title>
+<style>
+  :root {
+    --bg: #14110f;
+    --panel: #1e1a17;
+    --panel-2: #262120;
+    --line: #3a322e;
+    --text: #ece5dd;
+    --muted: #a1968c;
+    --accent: #c9a227;
+    --accent-soft: #3a2f14;
+    --good: #7fb069;
+    --warn: #d98c5f;
+    --bad: #c96a6a;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding-block: 28px;
+    padding-inline: 18px;
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.65 "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; }
+  h1 { font-size: 1.5rem; margin: 0 0 4px; letter-spacing: .02em; }
+  h1 span { color: var(--accent); }
+  .sub { color: var(--muted); font-size: .875rem; margin: 0 0 24px; }
+
+  form {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 18px;
+  }
+  .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+  label { display: block; font-size: .8rem; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .06em; }
+  select, input[type=date] {
+    width: 100%; padding: 9px 10px;
+    background: var(--panel-2); color: var(--text);
+    border: 1px solid var(--line); border-radius: 7px;
+    font: inherit;
+  }
+  .radios { display: flex; gap: 8px; }
+  .radios label {
+    flex: 1; margin: 0; padding: 9px 4px; text-align: center;
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 7px;
+    cursor: pointer; text-transform: none; letter-spacing: 0; font-size: .95rem; color: var(--text);
+  }
+  .radios input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .radios label:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+  .radios label:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .canchi-box {
+    margin-top: 14px; padding: 10px 12px;
+    background: var(--accent-soft); border: 1px solid #4d3f18; border-radius: 7px;
+    font-size: .9rem;
+  }
+  .canchi-box b { color: var(--accent); }
+  .canchi-box em { color: var(--muted); font-style: normal; font-size: .8rem; display: block; margin-top: 3px; }
+
+  button.primary {
+    margin-top: 16px; width: 100%; padding: 12px;
+    background: var(--accent); color: #22190a; border: 0; border-radius: 7px;
+    font: 600 1rem inherit; cursor: pointer;
+  }
+  button.primary:disabled { opacity: .55; cursor: progress; }
+
+  .status { margin-top: 14px; font-size: .9rem; color: var(--muted); }
+  .status.err { color: var(--bad); }
+
+  .verdict-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 24px 0 8px; }
+  .chip {
+    padding: 5px 11px; border-radius: 99px; font-size: .82rem;
+    background: var(--panel-2); border: 1px solid var(--line); color: var(--muted);
+  }
+  .chip b { color: var(--text); font-weight: 600; }
+  .chip.v-cat { border-color: var(--good); color: var(--good); }
+  .chip.v-tb { border-color: var(--warn); color: var(--warn); }
+  .chip.v-tt { border-color: var(--bad); color: var(--bad); }
+
+  section.part {
+    margin-top: 22px; background: var(--panel);
+    border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden;
+  }
+  section.part > header {
+    padding: 12px 16px; background: var(--panel-2);
+    border-bottom: 1px solid var(--line);
+    font-weight: 600; font-size: .95rem;
+  }
+  section.part > header small { color: var(--muted); font-weight: 400; margin-left: 6px; }
+  .part-body { padding: 16px; display: grid; gap: 18px; }
+
+  .block > .block-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; margin-bottom: 7px;
+  }
+  .block-head h3 { margin: 0; font-size: .8rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+  button.copy {
+    background: transparent; color: var(--muted);
+    border: 1px solid var(--line); border-radius: 6px;
+    padding: 3px 9px; font: inherit; font-size: .78rem; cursor: pointer;
+  }
+  button.copy:hover { color: var(--accent); border-color: var(--accent); }
+
+  pre {
+    margin: 0; padding: 12px; background: var(--panel-2);
+    border: 1px solid var(--line); border-radius: 7px;
+    white-space: pre-wrap; word-break: break-word;
+    font: 13px/1.6 ui-monospace, Consolas, monospace;
+    max-height: 320px; overflow: auto;
+  }
+  .fulltext { white-space: pre-wrap; background: var(--panel-2); border: 1px solid var(--line); border-radius: 7px; padding: 14px; }
+
+  img.gen { width: 100%; max-width: 320px; border-radius: 7px; border: 1px solid var(--line); display: block; }
+  .fallback-note {
+    padding: 10px 12px; border-radius: 7px; font-size: .86rem;
+    background: #3a2a18; border: 1px solid #6b4a22; color: #e8c89a;
+  }
+  .howto {
+    padding: 12px 14px; border-radius: 7px; font-size: .88rem;
+    background: var(--accent-soft); border: 1px solid #4d3f18; color: #e6d6a8;
+  }
+  .howto b { color: var(--accent); }
+  .howto ol { margin: 8px 0 0; padding-left: 20px; }
+  .howto li { margin-bottom: 3px; }
+
+  table.areas { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  table.areas th, table.areas td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  table.areas th { color: var(--muted); font-weight: 600; white-space: nowrap; }
+  table.areas td.src { color: var(--accent); white-space: nowrap; }
+  table.areas td.src.none { color: var(--muted); }
+  .table-scroll { overflow-x: auto; }
+
+  footer { margin-top: 30px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: .82rem; }
+  footer a { color: var(--accent); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Xem <span>Vận Mệnh Ngày</span></h1>
+  <p class="sub">Chọn năm sinh, giới tính và ngày dương lịch — nhận 2 prompt ảnh, 2 prompt video có lời voice, và 2 khối text đầy đủ để dựng video 20 giây.</p>
+
+  <form id="form">
+    <div class="grid">
+      <div>
+        <label for="birthYear">Năm sinh</label>
+        <select id="birthYear" name="birthYear" required></select>
+      </div>
+      <div>
+        <label id="genderLabel">Giới tính</label>
+        <div class="radios" role="radiogroup" aria-labelledby="genderLabel">
+          <label><input type="radio" name="gender" value="male" checked> Nam</label>
+          <label><input type="radio" name="gender" value="female"> Nữ</label>
+        </div>
+      </div>
+      <div>
+        <label for="date">Ngày xem (dương lịch)</label>
+        <input type="date" id="date" name="date" required>
+      </div>
+    </div>
+
+    <div class="canchi-box">
+      Tuổi <b id="canchi">—</b>
+      <em id="canchiNote">Can Chi được suy ra từ năm sinh, không cần bạn tự tra.</em>
+    </div>
+
+    <button class="primary" id="submit" type="submit">Xem vận mệnh</button>
+    <p class="status" id="status" hidden></p>
+  </form>
+
+  <div id="result" hidden></div>
+
+  <footer>
+    <p id="disclaimer"></p>
+    <p id="credit"></p>
+  </footer>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => (
+  { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+));
+
+// --- Can Chi tinh ngay tren client, cung cong thuc BR-01 ---
+const CAN = ['Giáp','Ất','Bính','Đinh','Mậu','Kỷ','Canh','Tân','Nhâm','Quý'];
+const CHI = ['Tý','Sửu','Dần','Mão','Thìn','Tỵ','Ngọ','Mùi','Thân','Dậu','Tuất','Hợi'];
+const canChiOf = (y) => `${CAN[((y - 4) % 10 + 10) % 10]} ${CHI[((y - 4) % 12 + 12) % 12]}`;
+
+// --- Khoi tao form ---
+(function init() {
+  const sel = $('birthYear');
+  const thisYear = new Date().getFullYear();
+  for (let y = thisYear; y >= 1900; y -= 1) {
+    const o = document.createElement('option');
+    o.value = String(y);
+    o.textContent = `${y} — ${canChiOf(y)}`;
+    sel.append(o);
+  }
+  sel.value = String(thisYear - 30);
+
+  const today = new Date();
+  $('date').value = [
+    today.getFullYear(),
+    String(today.getMonth() + 1).padStart(2, '0'),
+    String(today.getDate()).padStart(2, '0'),
+  ].join('-');
+
+  try {
+    const savedYear = localStorage.getItem('vm.birthYear');
+    const savedGender = localStorage.getItem('vm.gender');
+    if (savedYear && sel.querySelector(`option[value="${savedYear}"]`)) sel.value = savedYear;
+    if (savedGender === 'male' || savedGender === 'female') {
+      document.querySelector(`input[name=gender][value=${savedGender}]`).checked = true;
+    }
+  } catch { /* private mode hoac site data bi chan */ }
+
+  renderCanChi();
+  sel.addEventListener('change', renderCanChi);
+})();
+
+function renderCanChi() {
+  $('canchi').textContent = canChiOf(Number($('birthYear').value));
+}
+
+// --- Copy ---
+document.addEventListener('click', async (e) => {
+  const btn = e.target.closest('button.copy');
+  if (!btn) return;
+  const target = document.getElementById(btn.dataset.target);
+  if (!target) return;
+  try {
+    await navigator.clipboard.writeText(target.textContent);
+    const old = btn.textContent;
+    btn.textContent = 'Đã copy';
+    setTimeout(() => { btn.textContent = old; }, 1400);
+  } catch {
+    btn.textContent = 'Copy thủ công';
+  }
+});
+
+// --- Submit ---
+let timer = null;
+$('form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = $('submit');
+  const status = $('status');
+  if (btn.disabled) return;
+
+  const birthYear = Number($('birthYear').value);
+  const gender = document.querySelector('input[name=gender]:checked').value;
+  const date = $('date').value;
+
+  try {
+    localStorage.setItem('vm.birthYear', String(birthYear));
+    localStorage.setItem('vm.gender', gender);
+  } catch { /* bo qua */ }
+
+  btn.disabled = true;
+  btn.setAttribute('aria-busy', 'true');
+  $('result').hidden = true;
+  status.hidden = false;
+  status.className = 'status';
+  status.textContent = 'Đang tra lịch và sinh nội dung…';
+
+  const started = Date.now();
+  timer = setInterval(() => {
+    const s = Math.round((Date.now() - started) / 1000);
+    if (s >= 10) status.textContent = `Đang sinh ảnh… ${s}s (ảnh thường mất 30–45 giây)`;
+  }, 1000);
+
+  try {
+    const res = await fetch('/api/fortune', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ birthYear, gender, date }),
+    });
+    const body = await res.json();
+
+    if (!res.ok) {
+      status.className = 'status err';
+      status.textContent = errorMessage(res.status, body?.error);
+      return;
+    }
+    status.hidden = true;
+    render(body.data);
+  } catch (err) {
+    status.className = 'status err';
+    status.textContent = `Không gọi được server: ${err.message}`;
+  } finally {
+    clearInterval(timer);
+    btn.disabled = false;
+    btn.removeAttribute('aria-busy');
+  }
+});
+
+function errorMessage(httpStatus, error) {
+  const code = error?.code ?? 'UNKNOWN';
+  const base = error?.message ?? 'Có lỗi xảy ra';
+  if (code === 'CANCHI_ASSERT_FAILED') {
+    return `${base}. Nguồn lịch trả về Can Chi không khớp công thức — thử năm sinh khác.`;
+  }
+  if (code === 'RATE_LIMITED' || code === 'UPSTREAM_QUOTA_EXCEEDED') {
+    const s = error?.retryAfterSeconds;
+    return `${base}${s ? ` (chờ ${s} giây)` : ''}.`;
+  }
+  if (httpStatus === 502 || httpStatus === 504) {
+    return `${base}. Bấm "Xem vận mệnh" để thử lại.`;
+  }
+  return base;
+}
+
+// --- Render ---
+function render(data) {
+  const m = data.meta;
+  const vClass = m.verdict === 'CÁT' ? 'v-cat' : m.verdict === 'TRUNG BÌNH' ? 'v-tb' : 'v-tt';
+
+  const chips = [
+    `<span class="chip">Tuổi <b>${esc(m.person.canChi)}</b> · ${esc(m.person.napAm)} · mệnh <b>${esc(m.person.menh)}</b></span>`,
+    `<span class="chip">Ngày <b>${esc(m.day.canChi)}</b> · ${esc(m.day.solar)} (${esc(m.day.weekday)}) · âm ${esc(m.day.lunar)}</span>`,
+    `<span class="chip">Nạp âm ngày <b>${esc(m.day.napAm)}</b></span>`,
+    `<span class="chip">Thập Thần ngày <b>${esc(m.dayThapThan)}</b></span>`,
+    `<span class="chip ${vClass}">${esc(m.verdict)} <b>(${m.verdictScore})</b></span>`,
+    `<span class="chip">Giờ tốt <b>${m.bestHours.map((h) => esc(h.gio)).join(', ') || '—'}</b>${m.bestHoursFallback ? ' (không có Thập Thần thuận lợi)' : ''}</span>`,
+    `<span class="chip">Ảnh: <b>${m.imageMode === 'api' ? 'app tự sinh' : 'copy prompt thủ công'}</b></span>`,
+  ].join('');
+
+  $('result').innerHTML = `
+    <div class="verdict-row">${chips}</div>
+    <p class="sub">${esc(m.simplifiedMethodNote)}</p>
+    ${part(1, 'Phần 1 — 0:00–0:10', 'mục 1–7 về ngày', data.part1, null)}
+    ${part(2, 'Phần 2 — 0:10–0:20', 'tử vi 4 mảng', data.part2, data.part2.areas)}
+  `;
+  $('result').hidden = false;
+  $('disclaimer').textContent = m.disclaimer;
+  $('credit').innerHTML = `${esc(m.credit)} — <a href="https://huyenminh.com.vn" target="_blank" rel="noopener">huyenminh.com.vn</a>`;
+  $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function part(n, title, note, p, areas) {
+  let img;
+  if (p.image.status === 'generated') {
+    img = `<img class="gen" alt="Ảnh ${n} — thẻ bài phong thủy 9:16" src="data:${esc(p.image.mimeType)};base64,${esc(p.image.dataBase64)}">`;
+  } else if (p.image.status === 'prompt_only') {
+    img = `<div class="howto">
+      Copy <b>prompt tạo ảnh ${n}</b> bên dưới, dán vào <b>Gemini app</b> (gemini.google.com) để lấy ảnh ${n}.
+      <ol>
+        <li>Dán prompt ảnh → lưu ảnh về máy</li>
+        <li>Đưa ảnh + <b>prompt video ${n}</b> vào Google Flow (Veo) → clip 10 giây</li>
+        <li>Làm tương tự cho phần còn lại, rồi ghép 2 clip thành video 20 giây</li>
+      </ol>
+    </div>`;
+  } else {
+    img = `<div class="fallback-note">Không sinh được ảnh (<code>${esc(p.image.reason)}</code>). Copy prompt bên dưới rồi dán vào Gemini app để lấy ảnh.</div>`;
+  }
+
+  const areaTable = areas ? `
+    <div class="block">
+      <div class="block-head"><h3>Bốn mảng</h3></div>
+      <div class="table-scroll"><table class="areas">
+        <tr><th>Mảng</th><th>Thập Thần nguồn</th><th>Nội dung</th></tr>
+        ${[['taiLoc','Tài lộc'],['tinhCam','Tình cảm'],['sucKhoe','Sức khỏe'],['congViec','Công việc']]
+          .map(([k, label]) => `<tr>
+            <th>${label}</th>
+            <td class="src ${areas[k].source ? '' : 'none'}">${esc(areas[k].source ?? 'không nổi bật')}</td>
+            <td>${esc(areas[k].text)}</td>
+          </tr>`).join('')}
+      </table></div>
+    </div>` : '';
+
+  return `
+  <section class="part">
+    <header>${esc(title)}<small>${esc(note)}</small></header>
+    <div class="part-body">
+      <div class="block">
+        <div class="block-head"><h3>${p.image.status === 'prompt_only' ? `Cách lấy ảnh ${n}` : `Ảnh ${n}`}</h3></div>
+        ${img}
+      </div>
+      ${blk(`p${n}img`, `Prompt tạo ảnh ${n}`, p.imagePrompt)}
+      ${blk(`p${n}vid`, `Prompt video ${n} (Google Flow / Veo) — có nhúng lời voice`, p.videoPrompt)}
+      <div class="block">
+        <div class="block-head"><h3>Dịch nghĩa prompt video</h3></div>
+        <div class="fulltext">${esc(p.videoPromptVi)}</div>
+      </div>
+      ${areaTable}
+      <div class="block">
+        <div class="block-head">
+          <h3>Text đầy đủ</h3>
+          <button class="copy" data-target="p${n}full" type="button">Copy</button>
+        </div>
+        <div class="fulltext" id="p${n}full">${esc(p.fullText)}${p.closingLine ? `\n\n${esc(p.closingLine)}` : ''}</div>
+      </div>
+    </div>
+  </section>`;
+}
+
+function blk(id, title, content) {
+  return `
+  <div class="block">
+    <div class="block-head">
+      <h3>${esc(title)}</h3>
+      <button class="copy" data-target="${id}" type="button">Copy</button>
+    </div>
+    <pre id="${id}">${esc(content)}</pre>
+  </div>`;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+{
+  "name": "karma-ai",
+  "version": "1.0.0",
+  "private": true,
+  "description": "App Xem Van Menh Ngay - sinh nguyen lieu video 20s tu nam sinh, gioi tinh va ngay duong lich",
+  "type": "module",
+  "engines": {
+    "node": ">=22.9"
+  },
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node --env-file-if-exists=.env src/server.js",
+    "dev": "node --watch --env-file-if-exists=.env src/server.js",
+    "test": "node --test \"test/*.test.js\"",
+    "test:contract": "node --test \"test/contract.test.js\"",
+    "check": "node --check src/server.js && node --check src/routes/fortune.js && node --check src/middleware/rateLimit.js && node --check src/lib/canchi.js && node --check src/lib/calendar.js && node --check src/lib/compute.js && node --check src/lib/gemini.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
