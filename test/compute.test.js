@@ -6,6 +6,7 @@ import {
 } from '../src/lib/compute.js';
 import { validateRequest } from '../src/routes/fortune.js';
 import { createApp } from '../src/server.js';
+import { buildImagePrompt, zodiacVisualFor } from '../src/lib/gemini.js';
 
 /* ---------- Fixture: payload thuc te da chup tu API Huyen Minh ---------- */
 
@@ -85,6 +86,35 @@ const computeFor = (dayInfo, tt, gender = 'male', date = '2026-09-11') =>
     dayInfo,
     hourFrames: hourFramesFor(dayInfo, tt),
   });
+
+test('prompt ảnh giữ đúng con giáp và bố cục thẻ cho Giáp Tuất 1994', () => {
+  const prompt = buildImagePrompt({
+    menh: 'Hỏa',
+    person: {
+      birthYear: 1994,
+      canChi: 'Giáp Tuất',
+      chi: 'Tuất',
+      napAm: 'Sơn Đầu Hỏa',
+      gender: 'male',
+    },
+    day: { solar: '21/09/2026' },
+    title: 'Vận mệnh hôm nay',
+    bullets: ['Giờ tốt: Tý', 'Giữ tâm an'],
+    isPart2: false,
+    verdict: 'TRUNG BÌNH',
+  });
+
+  assert.equal(zodiacVisualFor('Tuất').animal, 'Dog');
+  assert.match(prompt, /Giáp Tuất/);
+  assert.match(prompt, /birth year 1994/);
+  assert.match(prompt, /zodiac animal is a Dog/);
+  assert.match(prompt, /Never replace it with a bird/);
+  assert.match(prompt, /88% of the canvas width/);
+  assert.match(prompt, /tarot-card frame/);
+  assert.match(prompt, /KARMA AI/);
+  assert.match(prompt, /Sơn Đầu Hỏa/);
+  assert.match(prompt, /Ngày xem: 21\/09\/2026/);
+});
 
 /* ---------- BR-09: hai worked example trong spec ---------- */
 

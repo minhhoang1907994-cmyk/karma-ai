@@ -78,6 +78,8 @@ function assembleParts({ computed, text, images }) {
     return {
       imagePrompt: buildImagePrompt({
         menh,
+        person: computed.person,
+        day: computed.day,
         title: src.imageTitle,
         bullets: src.imageBullets,
         isPart2,
@@ -203,6 +205,8 @@ export function createFortuneRouter({ deps = {} } = {}) {
       const src = isPart2 ? written.part2 : written.part1;
       return buildImagePrompt({
         menh,
+        person: computed.person,
+        day: computed.day,
         title: src.imageTitle,
         bullets: src.imageBullets,
         isPart2,

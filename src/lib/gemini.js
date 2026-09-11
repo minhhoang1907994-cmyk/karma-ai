@@ -51,6 +51,30 @@ const MENH_STYLE = {
   },
 };
 
+/**
+ * Hồ sơ hình ảnh cho 12 con giáp. Không suy con vật từ mệnh: ví dụ mệnh Hỏa
+ * có phượng hoàng nhưng Giáp Tuất vẫn phải hiển thị chó.
+ */
+const ZODIAC_ART = {
+  'Tý': { animal: 'Rat', scene: 'a graceful jade rat beside grain and moonlit water' },
+  'Sửu': { animal: 'Ox', scene: 'a calm ox among misty rice terraces' },
+  'Dần': { animal: 'Tiger', scene: 'a dignified tiger in a bamboo-and-mountain landscape' },
+  'Mão': { animal: 'Cat', scene: 'an elegant Vietnamese zodiac cat among plum blossoms' },
+  'Thìn': { animal: 'Dragon', scene: 'a benevolent Eastern dragon moving through auspicious clouds' },
+  'Tỵ': { animal: 'Snake', scene: 'a refined snake coiled near orchids and river stones' },
+  'Ngọ': { animal: 'Horse', scene: 'a spirited horse on a dawn-lit hill' },
+  'Mùi': { animal: 'Goat', scene: 'a gentle mountain goat among soft clouds and wildflowers' },
+  'Thân': { animal: 'Monkey', scene: 'a lively monkey on an ancient peach-tree branch' },
+  'Dậu': { animal: 'Rooster', scene: 'a proud rooster beside peonies at sunrise' },
+  'Tuất': { animal: 'Dog', scene: 'a loyal Vietnamese village dog beside a lantern-lit gate' },
+  'Hợi': { animal: 'Pig', scene: 'a peaceful pig among lotus leaves and warm lantern light' },
+};
+
+/** Tra về mô tả chuẩn của con giáp để prompt không bị lái sang biểu tượng ngũ hành. */
+export function zodiacVisualFor(chi) {
+  return ZODIAC_ART[chi] ?? { animal: 'Vietnamese zodiac animal', scene: 'a subtle Vietnamese zodiac animal motif' };
+}
+
 export class GeminiError extends Error {
   constructor(message, { httpStatus = null, retryAfterSeconds = null, cause = null } = {}) {
     super(message);
@@ -307,8 +331,14 @@ export async function generateText(computed, { boundary = '', fetchImpl } = {}) 
 }
 
 /** Ghep prompt tao anh tu bullet do Gemini viet + bang mau theo menh. */
-export function buildImagePrompt({ menh, title, bullets, isPart2, verdict }) {
+export function buildImagePrompt({ menh, person, day, title, bullets, isPart2, verdict }) {
   const style = MENH_STYLE[menh] ?? MENH_STYLE['Thổ'];
+  const zodiac = zodiacVisualFor(person?.chi);
+  const birthYear = person?.birthYear ?? '';
+  const canChi = person?.canChi ?? '';
+  const napAm = person?.napAm ?? '';
+  const gender = person?.gender === 'female' ? 'Nữ' : person?.gender === 'male' ? 'Nam' : '';
+  const solarDate = day?.solar ?? '';
   const tone = !isPart2
     ? 'soft, calm, quiet — the feeling of a day just beginning'
     : verdict === 'CÁT'
@@ -318,14 +348,26 @@ export function buildImagePrompt({ menh, title, bullets, isPart2, verdict }) {
         : 'balanced between light and shadow';
 
   return [
-    `Vietnamese Feng Shui-style vertical card, 9:16 portrait. Background: ${style.symbols}, in ${style.colors}, painted in modern Eastern ink-wash style, with a faint bagua wheel (${style.trigrams} trigrams) in the background. Soft cinematic lighting matching the ${menh} element mood.`,
+    `Create a complete Vietnamese fortune-card design, 9:16 portrait. Background: ${style.symbols}, in ${style.colors}, painted in modern Eastern ink-wash style, with a faint bagua wheel (${style.trigrams} trigrams) in the background. Soft cinematic lighting matching the ${menh} element mood.`,
     '',
-    'Overlay a semi-transparent dark card panel over the center of the image containing the following Vietnamese text, rendered in clean, elegant, highly legible Vietnamese typography. Make sure every Vietnamese diacritic is rendered correctly. Keep the type small enough that all lines fit comfortably inside the panel.',
+    'ZODIAC IDENTITY — NON-NEGOTIABLE: this reading is for ' +
+      `"${canChi}" (birth year ${birthYear}), whose zodiac animal is a ${zodiac.animal}. ` +
+      `Show exactly one clearly recognizable ${zodiac.animal}: ${zodiac.scene}. ` +
+      `The animal must be visible in the background, preferably in the lower third or peeking from both sides of the panel. Never replace it with a bird, phoenix, dragon, or any other zodiac animal. Do not show a second animal.`,
     '',
-    `Tiêu đề: "${title}"`,
+    'CARD COMPOSITION: add an elegant tarot-card frame around the full artwork: a thin antique-gold double border, delicate Eastern cloud and bagua ornaments in the four corners, rounded card corners, and a subtle paper texture. The frame must look intentional and premium, not like a plain poster.',
+    '',
+    'At the top, above the content panel, add a clear Vietnamese title area: an original circular Karma AI emblem (a small gold K monogram formed from a yin-yang-inspired swirl, not a logo of any existing brand) followed by the wordmark "KARMA AI", then the title below. This brand mark is intentional app branding, not a watermark.',
+    `Title to render: "${title}".`,
+    '',
+    `Directly below the title, add a compact input/context ribbon so the card visibly relates to its owner: "${canChi} ${birthYear} (${gender})  |  Ngày xem: ${solarDate}" and a smaller line "${napAm} · Mệnh ${menh}". Render these inputs in clean, readable Vietnamese.`,
+    '',
+    'Overlay a light smoky-gray, semi-transparent content panel across the center. It must be WIDE: 88% of the canvas width with only 6% side margins, so Vietnamese bullets have long lines and do not wrap unnecessarily. Leave generous inner padding. Use high-contrast charcoal text, a clear heading hierarchy, and short one-line bullets where possible. Make every Vietnamese diacritic legible. Do not make the central panel narrow, tall, or cramped.',
+    '',
+    'Content inside the gray panel:',
     ...bullets.map((b) => `• ${b}`),
     '',
-    `Overall mood: ${tone}. High detail, professional mobile-app infographic aesthetic, no watermark.`,
+    `Overall mood: ${tone}. High detail, professional mobile-app infographic aesthetic. No watermark, no unrelated text, no incorrect zodiac animal.`,
   ].join('\n');
 }
 

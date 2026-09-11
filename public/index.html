@@ -139,7 +139,6 @@
   .table-scroll { overflow-x: auto; }
 
   footer { margin-top: 30px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: .82rem; }
-  footer a { color: var(--accent); }
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -180,7 +179,6 @@
 
   <footer>
     <p id="disclaimer"></p>
-    <p id="credit"></p>
   </footer>
 </div>
 
@@ -189,6 +187,15 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => (
   { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
 ));
+
+// Trình bày phần lời đọc theo từng câu để dễ rà soát và đọc khi dựng video.
+function formatFullText(text) {
+  return String(text ?? '')
+    .replace(/\r\n?/g, '\n')
+    .replace(/([.!?…])(?:[ \t]*\n?[ \t]*)+(?=\S)/g, '$1\n\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
 
 // --- Can Chi tinh ngay tren client, cung cong thuc BR-01 ---
 const CAN = ['Giáp','Ất','Bính','Đinh','Mậu','Kỷ','Canh','Tân','Nhâm','Quý'];
@@ -341,7 +348,6 @@ function render(data) {
   `;
   $('result').hidden = false;
   $('disclaimer').textContent = m.disclaimer;
-  $('credit').innerHTML = `${esc(m.credit)} — <a href="https://huyenminh.com.vn" target="_blank" rel="noopener">huyenminh.com.vn</a>`;
   $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -396,7 +402,7 @@ function part(n, title, note, p, areas) {
           <h3>Text đầy đủ</h3>
           <button class="copy" data-target="p${n}full" type="button">Copy</button>
         </div>
-        <div class="fulltext" id="p${n}full">${esc(p.fullText)}${p.closingLine ? `\n\n${esc(p.closingLine)}` : ''}</div>
+        <div class="fulltext" id="p${n}full">${esc(formatFullText(p.fullText))}${p.closingLine ? `\n\n${esc(formatFullText(p.closingLine))}` : ''}</div>
       </div>
     </div>
   </section>`;

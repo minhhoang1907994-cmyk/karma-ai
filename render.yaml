@@ -1,0 +1,26 @@
+# Render Blueprint for karma-ai.
+# During the initial Blueprint setup, Render prompts for GEMINI_API_KEY.
+services:
+  - type: web
+    name: karma-ai
+    runtime: node
+    region: singapore
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      # Pin Node because the app requires Node's --env-file-if-exists flag.
+      - key: NODE_VERSION
+        value: 22.12.0
+      - key: NODE_ENV
+        value: production
+      # Never commit the API key. Render asks for it when the Blueprint is created.
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_TEXT_MODEL
+        value: gemini-2.5-flash
+      # Default avoids paid image-generation API calls; the app returns image prompts.
+      - key: IMAGE_MODE
+        value: prompt
