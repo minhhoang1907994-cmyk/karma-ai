@@ -51,6 +51,26 @@ export class CanChiAssertError extends Error {
  * Goi mot endpoint, retry 1 lan khi loi mang hoac 5xx.
  * Timeout KHONG retry - de tong thoi gian khong vuot ngan sach BR-12.
  */
+/**
+ * Doc dau moi tu response loi de biet ai chan: Cloudflare WAF hay chinh API.
+ * WAF tra HTML kem cf-ray/cf-mitigated; loi nghiep vu cua API tra JSON.
+ */
+async function describeErrorResponse(res) {
+  const parts = [`HTTP ${res.status}`];
+  for (const name of ['content-type', 'cf-ray', 'cf-mitigated', 'retry-after']) {
+    const value = res.headers?.get?.(name);
+    if (value) parts.push(`${name}=${value}`);
+  }
+  let snippet = '';
+  try {
+    snippet = (await res.text()).replace(/\s+/g, ' ').trim().slice(0, 200);
+  } catch (err) {
+    snippet = `khong doc duoc body: ${err.message}`;
+  }
+  if (snippet) parts.push(`body="${snippet}"`);
+  return parts.join(' ');
+}
+
 async function fetchJson(endpoint, params, { fetchImpl = globalThis.fetch } = {}) {
   const url = `${BASE_URL}/${endpoint}?${new URLSearchParams(params)}`;
   let lastError = null;
@@ -74,14 +94,14 @@ async function fetchJson(endpoint, params, { fetchImpl = globalThis.fetch } = {}
     }
 
     if (res.status >= 500) {
-      lastError = new CalendarApiError(`${endpoint} tra ve HTTP ${res.status}`, {
+      lastError = new CalendarApiError(`${endpoint} tra ve ${await describeErrorResponse(res)}`, {
         endpoint,
         httpStatus: res.status,
       });
       continue;
     }
     if (!res.ok) {
-      throw new CalendarApiError(`${endpoint} tra ve HTTP ${res.status}`, {
+      throw new CalendarApiError(`${endpoint} tra ve ${await describeErrorResponse(res)}`, {
         endpoint,
         httpStatus: res.status,
       });
